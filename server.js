@@ -3,6 +3,7 @@ import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import leadRoutes from "./routes/leadRoutes.js";
+import staffRoutes from "./routes/staffRoutes.js";
 import cors from "cors";
 
 import customerRoutes from "./routes/customerRoutes.js";
@@ -31,6 +32,7 @@ app.use(express.json());
 // Routes
 app.use("/api/leads", leadRoutes);
 app.use("/api/customers",customerRoutes);
+app.use("/api/staff", staffRoutes);
 
 // Routes
 app.get("/", (req, res) => {
