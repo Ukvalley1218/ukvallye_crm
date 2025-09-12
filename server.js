@@ -5,6 +5,9 @@ import connectDB from "./config/db.js";
 import leadRoutes from "./routes/leadRoutes.js";
 import cors from "cors";
 
+import customerRoutes from "./routes/customerRoutes.js";
+
+
 dotenv.config();
 
 const app = express();
@@ -27,6 +30,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/leads", leadRoutes);
+app.use("/api/customers",customerRoutes);
 
 // Routes
 app.get("/", (req, res) => {
