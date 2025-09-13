@@ -10,7 +10,7 @@ import noteRoutes from "./routes/noteRoutes.js";
 import cors from "cors";
 
 import customerRoutes from "./routes/customerRoutes.js";
-import authRoutes from "./routes/authRoutes.js";
+// import authRoutes from "./routes/authRoutes.js";
 import checkInOutRoutes from "./routes/checkInOutRoutes.js";
 
 dotenv.config();
