@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import leadRoutes from "./routes/leadRoutes.js";
 import staffRoutes from "./routes/staffRoutes.js";
+import reminderRoutes from "./routes/reminderRoutes.js";
+import taskRoutes from "./routes/taskRoutes.js";
+import noteRoutes from "./routes/noteRoutes.js";
 import cors from "cors";
 
 import customerRoutes from "./routes/customerRoutes.js";
@@ -33,6 +36,9 @@ app.use(express.json());
 app.use("/api/leads", leadRoutes);
 app.use("/api/customers",customerRoutes);
 app.use("/api/staff", staffRoutes);
+app.use("/api/reminders", reminderRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/notes", noteRoutes);
 
 // Routes
 app.get("/", (req, res) => {
