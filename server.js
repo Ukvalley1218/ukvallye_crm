@@ -34,7 +34,7 @@ app.use(cors({
 app.use(express.json());
 
 // auth route
-app.use("/api/auth", authRoutes);
+// app.use("/api/auth", authRoutes);
 app.use("/api/checkinout",checkInOutRoutes);
 // Routes
 app.use("/api/leads", leadRoutes);
