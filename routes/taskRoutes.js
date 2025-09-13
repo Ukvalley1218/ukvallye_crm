@@ -1,12 +1,11 @@
 import express from "express";
-import { createReminder, deleteReminder, getReminder, getReminders, updateReminder } from "../controllers/reminderController.js";
-
+import { getTask,getTasks,createTask,updateTask,deleteTask } from "../controllers/taskController.js";
 
 const router = express.Router();
-router.get("/", getReminders);
-router.get("/:id", getReminder);
-router.post("/", createReminder);
-router.put("/:id", updateReminder);
-router.delete("/:id", deleteReminder);
+router.get("/", getTask);
+router.get("/:id", getTasks);
+router.post("/", createTask);
+router.put("/:id", updateTask);
+router.delete("/:id", deleteTask);
 
 export default router;

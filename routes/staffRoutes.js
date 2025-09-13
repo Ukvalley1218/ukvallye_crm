@@ -1,6 +1,5 @@
 import express from "express";
 
-import {} from "../controllers/staffController.js";
 import {
   getStaff,
   getStaffs,

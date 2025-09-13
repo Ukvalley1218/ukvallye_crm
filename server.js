@@ -10,7 +10,8 @@ import noteRoutes from "./routes/noteRoutes.js";
 import cors from "cors";
 
 import customerRoutes from "./routes/customerRoutes.js";
-
+import authRoute from "./routes/authRoute.js";
+import checkInOutRoutes from "./routes/checkInOutRoutes.js";
 
 dotenv.config();
 
@@ -32,6 +33,9 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 
+// auth route
+app.use("/api/auth", authRoute);
+app.use("/api/checkinout",checkInOutRoutes);
 // Routes
 app.use("/api/leads", leadRoutes);
 app.use("/api/customers",customerRoutes);

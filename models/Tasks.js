@@ -2,13 +2,13 @@ import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema(
   {
-    reminderId: { type: mongoose.Schema.Types.ObjectId, ref: "reminders" }, // optional link to reminder
-    leadId: { type: mongoose.Schema.Types.ObjectId, ref: "leads" },         // optional link to lead
-    customerId: { type: mongoose.Schema.Types.ObjectId, ref: "customers" }, // optional link to customer
-    staffId: { type: mongoose.Schema.Types.ObjectId, ref: "staffs", required: true }, // assigned staff
-    title: { type: String, required: true },
+    reminderid: { type: mongoose.Schema.Types.ObjectId, ref: "Reminders",default:null }, // optional link to reminder
+    leadid: { type: mongoose.Schema.Types.ObjectId, ref: "Lead",default:null },         // optional link to lead
+    customerid: { type: mongoose.Schema.Types.ObjectId, ref: "Customer",default:null }, // optional link to customer
+    staffid: { type: mongoose.Schema.Types.ObjectId, ref: "Staff",default:null }, // assigned staff
+    title: { type: String},
     description: { type: String },
-    dueDateTime: { type: Date, required: true },
+    dueDateTime: { type: Date},
     priority: {
       type: String,
       enum: ["low", "medium", "high"],

@@ -1,13 +1,14 @@
 // controllers/reminderController.js
-import Reminder from "../models/Remiender.js";
+import Reminder from "../models/Remiender.js"; // updated schema
 
 // @desc Get all reminders
 export const getReminders = async (req, res, next) => {
   try {
     const reminders = await Reminder.find()
-      .populate("leadId")
-      .populate("customerId")
-      .populate("staffId");
+      .populate("leadsid") // populate Lead documents
+      .populate("customersid") // populate Customer documents
+      .populate("staffid"); // populate Staff documents
+
     res.json(reminders);
   } catch (err) {
     next(err);
@@ -18,11 +19,14 @@ export const getReminders = async (req, res, next) => {
 export const getReminder = async (req, res, next) => {
   try {
     const reminder = await Reminder.findById(req.params.id)
-      .populate("leadId")
-      .populate("customerId")
-      .populate("staffId");
+      .populate("leadsid")
+      .populate("customersid")
+      .populate("staffid");
 
-    if (!reminder) return res.status(404).json({ message: "Reminder not found" });
+    if (!reminder) {
+      return res.status(404).json({ message: "Reminder not found" });
+    }
+
     res.json(reminder);
   } catch (err) {
     next(err);
@@ -30,24 +34,40 @@ export const getReminder = async (req, res, next) => {
 };
 
 // @desc Create new reminder
+// @desc Create new reminder
 export const createReminder = async (req, res, next) => {
   try {
     const reminder = await Reminder.create(req.body);
+
+    // populate after creation
+    await reminder.populate("leadsid");
+    await reminder.populate("customersid");
+    await reminder.populate("staffid");
+
     res.status(201).json(reminder);
   } catch (err) {
     next(err);
   }
 };
 
+
 // @desc Update reminder
 export const updateReminder = async (req, res, next) => {
   try {
-    const reminder = await Reminder.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const reminder = await Reminder.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
 
-    if (!reminder) return res.status(404).json({ message: "Reminder not found" });
+    if (!reminder) {
+      return res.status(404).json({ message: "Reminder not found" });
+    }
+
+    await reminder.populate("leadsid");
+    await reminder.populate("customersid");
+    await reminder.populate("staffid");
+
     res.json(reminder);
   } catch (err) {
     next(err);
@@ -58,9 +78,12 @@ export const updateReminder = async (req, res, next) => {
 export const deleteReminder = async (req, res, next) => {
   try {
     const reminder = await Reminder.findByIdAndDelete(req.params.id);
-    if (!reminder) return res.status(404).json({ message: "Reminder not found" });
 
-    res.json({ message: "Reminder deleted" });
+    if (!reminder) {
+      return res.status(404).json({ message: "Reminder not found" });
+    }
+
+    res.json({ message: "Reminder deleted successfully" });
   } catch (err) {
     next(err);
   }

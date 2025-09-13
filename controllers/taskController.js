@@ -4,11 +4,11 @@ import Task from "../models/Tasks.js";
 // @desc Get all tasks
 export const getTasks = async (req, res, next) => {
   try {
-    const tasks = await Task.find()
-      .populate("reminderId") // if tasks are linked to reminders
-      .populate("staffId")    // if directly linked to staff
-      .populate("leadId")     // optional if task is tied to a lead
-      .populate("customerId"); // optional if task is tied to a customer
+    const tasks = await Task.findById(req.params.id)
+      .populate("reminderid") // if tasks are linked to reminders
+      .populate("staffid")    // if directly linked to staff
+      .populate("leadid")     // optional if task is tied to a lead
+      .populate("customerid"); // optional if task is tied to a customer
 
     res.json(tasks);
   } catch (err) {
@@ -19,11 +19,11 @@ export const getTasks = async (req, res, next) => {
 // @desc Get single task
 export const getTask = async (req, res, next) => {
   try {
-    const task = await Task.findById(req.params.id)
-      .populate("reminderId")
-      .populate("staffId")
-      .populate("leadId")
-      .populate("customerId");
+    const task = await Task.find()
+      .populate("reminderid")
+      .populate("staffid")
+      .populate("leadid")
+      .populate("customerid");
 
     if (!task) return res.status(404).json({ message: "Task not found" });
     res.json(task);
@@ -36,6 +36,12 @@ export const getTask = async (req, res, next) => {
 export const createTask = async (req, res, next) => {
   try {
     const task = await Task.create(req.body);
+     // populate after creation
+     await task.populate("reminderid"); 
+    await task.populate("leadid");
+    await task.populate("customerid");
+    await task.populate("staffid");
+
     res.status(201).json(task);
   } catch (err) {
     next(err);
@@ -51,6 +57,11 @@ export const updateTask = async (req, res, next) => {
     });
 
     if (!task) return res.status(404).json({ message: "Task not found" });
+     // populate after creation
+     await task.populate("reminderid"); 
+    await task.populate("leadid");
+    await task.populate("customerid");
+    await task.populate("staffid");
     res.json(task);
   } catch (err) {
     next(err);

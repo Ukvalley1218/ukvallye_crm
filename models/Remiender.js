@@ -4,9 +4,9 @@ import mongoose from "mongoose";
 const staffSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
-    leadsid:  [{ type: mongoose.Schema.Types.ObjectId, ref: "leads" , default: null }],
-    customersid:  [{ type: mongoose.Schema.Types.ObjectId, ref: "customers" , default: null }],
-    staffid:  [{ type: mongoose.Schema.Types.ObjectId, ref: "staffs" , default: null }],
+    leadsid:  [{ type: mongoose.Schema.Types.ObjectId, ref: "Lead" , default: null }],
+    customersid:  [{ type: mongoose.Schema.Types.ObjectId, ref: "Customer" , default: null }],
+    staffid:  [{ type: mongoose.Schema.Types.ObjectId, ref: "Staff" , default: null }],
     title: { type: String },
     description: { type: String },
     datetime: { type: Date },

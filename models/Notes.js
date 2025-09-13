@@ -3,9 +3,9 @@ import mongoose from "mongoose";
 const noteSchema = new mongoose.Schema(
   {
     // Relations
-    leadId: { type: mongoose.Schema.Types.ObjectId, ref: "leads" },        // optional link to lead
-    customerId: { type: mongoose.Schema.Types.ObjectId, ref: "customers" }, // optional link to customer
-    staffId: { type: mongoose.Schema.Types.ObjectId, ref: "staffs", required: true }, // who wrote the note
+    leadid: { type: mongoose.Schema.Types.ObjectId, ref: "Lead",dafault:null },        // optional link to lead
+    customerid: { type: mongoose.Schema.Types.ObjectId, ref: "Customer",dafault:null }, // optional link to customer
+    staffid: { type: mongoose.Schema.Types.ObjectId, ref: "Staff", required: true }, // who wrote the note
 
     // Note details
     content: { type: String, required: true }, // actual note text

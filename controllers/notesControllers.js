@@ -5,9 +5,9 @@ import Note from "../models/Notes.js";
 export const getNotes = async (req, res, next) => {
   try {
     const notes = await Note.find()
-      .populate("leadId")
-      .populate("customerId")
-      .populate("staffId");
+      .populate("leadid")
+      .populate("customerid")
+      .populate("staffid");
 
     res.json(notes);
   } catch (err) {
@@ -19,9 +19,9 @@ export const getNotes = async (req, res, next) => {
 export const getNote = async (req, res, next) => {
   try {
     const note = await Note.findById(req.params.id)
-      .populate("leadId")
-      .populate("customerId")
-      .populate("staffId");
+      .populate("leadid")
+      .populate("customerid")
+      .populate("staffid");
 
     if (!note) return res.status(404).json({ message: "Note not found" });
     res.json(note);
@@ -34,6 +34,9 @@ export const getNote = async (req, res, next) => {
 export const createNote = async (req, res, next) => {
   try {
     const note = await Note.create(req.body);
+    await note.populate("leadid");
+    await note.populate("customerid");
+    await note.populate("staffid");
     res.status(201).json(note);
   } catch (err) {
     next(err);
@@ -47,8 +50,11 @@ export const updateNote = async (req, res, next) => {
       new: true,
       runValidators: true,
     });
-
     if (!note) return res.status(404).json({ message: "Note not found" });
+    await note.populate("leadid");
+    await note.populate("customerid");
+    await note.populate("staffid");
+    res.json(note);
     res.json(note);
   } catch (err) {
     next(err);
