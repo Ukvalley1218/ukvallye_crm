@@ -2,12 +2,34 @@
 import Reminder from "../models/Remiender.js"; // updated schema
 
 // @desc Get all reminders
+// @desc Get all reminders with filters
 export const getReminders = async (req, res, next) => {
   try {
-    const reminders = await Reminder.find()
-      .populate("leadsid") // populate Lead documents
-      .populate("customersid") // populate Customer documents
-      .populate("staffid"); // populate Staff documents
+    const { status, priority, reminderType, staffid, customersid, leadsid, startDate, endDate } = req.query;
+
+    // Build filter object dynamically
+    const filter = {};
+
+    if (status) filter.status = status;
+    if (priority) filter.priority = priority;
+    if (reminderType) filter.reminderType = reminderType;
+    if (staffid) filter.staffid = staffid;
+    if (customersid) filter.customersid = customersid;
+    if (leadsid) filter.leadsid = leadsid;
+
+    // Date range filter
+    if (startDate && endDate) {
+      filter.datetime = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    } else if (startDate) {
+      filter.datetime = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      filter.datetime = { $lte: new Date(endDate) };
+    }
+
+    const reminders = await Reminder.find(filter)
+      .populate("leadsid")
+      .populate("customersid")
+      .populate("staffid");
 
     res.json(reminders);
   } catch (err) {

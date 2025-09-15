@@ -2,9 +2,33 @@
 import Note from "../models/Notes.js";
 
 // @desc Get all notes
+// @desc Get all notes with filters
 export const getNotes = async (req, res, next) => {
   try {
-    const notes = await Note.find()
+    const { leadid, customerid, staffid, tag, search, startDate, endDate } = req.query;
+
+    const filter = {};
+
+    if (leadid) filter.leadid = leadid;
+    if (customerid) filter.customerid = customerid;
+    if (staffid) filter.staffid = staffid;
+    if (tag) filter.tags = { $in: [tag] }; // filter notes containing a tag
+
+    // Text search inside content
+    if (search) {
+      filter.content = { $regex: search, $options: "i" }; // case-insensitive
+    }
+
+    // Date range filter (createdAt)
+    if (startDate && endDate) {
+      filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    } else if (startDate) {
+      filter.createdAt = { $gte: new Date(startDate) };
+    } else if (endDate) {
+      filter.createdAt = { $lte: new Date(endDate) };
+    }
+
+    const notes = await Note.find(filter)
       .populate("leadid")
       .populate("customerid")
       .populate("staffid");
