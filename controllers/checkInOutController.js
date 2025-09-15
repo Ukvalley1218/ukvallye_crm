@@ -1,7 +1,10 @@
 import cloudinary from "../config/cloudinary.js";
 import CheckInOut from "../models/CheckInOut.js";
 import { getDistance } from "geolib";
-import { OFFICE_LOCATION,MAX_DISTANCE_METERS } from "../config/officeConfig.js";
+import {
+  OFFICE_LOCATION,
+  MAX_DISTANCE_METERS,
+} from "../config/officeConfig.js";
 import { calculateDistance } from "../utils/calcDistance.js";
 
 // const OFFICE_LOCATION = {
@@ -9,88 +12,169 @@ import { calculateDistance } from "../utils/calcDistance.js";
 //   longitude: 73.7899521,
 // };
 
+// export const checkInOut = async (req, res, next) => {
+//   try {
+//     const { type, latitude, longitude } = req.body;
+//     const userId = req.user.id;
+
+//     if (!req.file) {
+//       return res.status(400).json({ message: "Selfie is required" });
+//     }
+
+//     // Upload selfie
+//     // const selfieUrl = await new Promise((resolve, reject) => {
+//     //   const stream = cloudinary.uploader.upload_stream(
+//     //     { folder: "checkin-out" },
+//     //     (error, result) => {
+//     //       if (error) reject(error);
+//     //       else resolve(result.secure_url);
+//     //     }
+//     //   );
+//     //   stream.end(req.file.buffer);
+//     // });
+
+//     // Date key (YYYY-MM-DD)
+//     const today = new Date().toISOString().split("T")[0];
+
+//     // Distance from office
+//     const distance = getDistance(
+//       { latitude, longitude },
+//       OFFICE_LOCATION
+//     );
+
+//     let record;
+
+//     if (type === "checkin") {
+//       // Create or update check-in record for today
+//       record = await CheckInOut.findOne({ user: userId, date: today });
+
+//       if (record && record.checkInTime) {
+//         return res.status(400).json({ message: "Already checked in today" });
+//       }
+
+//       record = await CheckInOut.create({
+//         user: userId,
+//         type: "checkin",
+//         date: today,
+//         checkInTime: new Date(),
+//         // selfieUrl,
+//         location: { latitude, longitude },
+//         officeLocation: OFFICE_LOCATION,
+//         distanceFromOffice: distance,
+//       });
+//     }
+
+//     if (type === "checkout") {
+//       // Must exist before checkout
+//       record = await CheckInOut.findOne({ user: userId, date: today });
+
+//       if (!record) {
+//         return res.status(400).json({ message: "No check-in found for today" });
+//       }
+
+//       if (record.checkOutTime) {
+//         return res.status(400).json({ message: "Already checked out today" });
+//       }
+
+//       record.checkOutTime = new Date();
+//       record.type = "checkout";
+//     //   record.selfieUrl = selfieUrl;
+//       record.location = { latitude, longitude };
+//       record.distanceFromOffice = distance;
+
+//       await record.save();
+//     }
+
+//     res.status(201).json({
+//       message: `User ${type} successful`,
+//       record,
+//     });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
 export const checkInOut = async (req, res, next) => {
   try {
-    const { type, latitude, longitude } = req.body;
     const userId = req.user.id;
-   
+    const { type, latitude, longitude, selfieUrl } = req.body;
 
-    if (!req.file) {
-      return res.status(400).json({ message: "Selfie is required" });
+    if (!type || !["checkin", "checkout"].includes(type)) {
+      return res.status(400).json({ message: "Invalid type. Must be 'checkin' or 'checkout'" });
     }
 
-    // Upload selfie
-    // const selfieUrl = await new Promise((resolve, reject) => {
-    //   const stream = cloudinary.uploader.upload_stream(
-    //     { folder: "checkin-out" },
-    //     (error, result) => {
-    //       if (error) reject(error);
-    //       else resolve(result.secure_url);
-    //     }
-    //   );
-    //   stream.end(req.file.buffer);
-    // });
+    if (!latitude || !longitude) {
+      return res.status(400).json({ message: "Location required" });
+    }
 
-    // Date key (YYYY-MM-DD)
+    // Distance validation
+    const distance = calculateDistance(latitude, longitude, OFFICE_LOCATION.lat, OFFICE_LOCATION.lng);
+    if (distance > MAX_DISTANCE_METERS) {
+      return res.status(403).json({
+        message: `${type} failed. You are ${Math.round(distance)}m away from office`,
+      });
+    }
+
     const today = new Date().toISOString().split("T")[0];
 
-    // Distance from office
-    const distance = getDistance(
-      { latitude, longitude },
-      OFFICE_LOCATION
-    );
-
-    let record;
-
     if (type === "checkin") {
-      // Create or update check-in record for today
-      record = await CheckInOut.findOne({ user: userId, date: today });
+      // Check if there's an open session (checked in but not checked out)
+      const active = await CheckInOut.findOne({
+        user: userId,
+        date: today,
+        checkOutTime: null,
+      });
 
-      if (record && record.checkInTime) {
-        return res.status(400).json({ message: "Already checked in today" });
+      if (active) {
+        return res.status(400).json({ message: "Already checked in, please checkout first" });
       }
 
-      record = await CheckInOut.create({
+      const record = await CheckInOut.create({
         user: userId,
         type: "checkin",
         date: today,
         checkInTime: new Date(),
-        // selfieUrl,
+        selfieUrl,
         location: { latitude, longitude },
-        officeLocation: OFFICE_LOCATION,
+        officeLocation: {
+          latitude: OFFICE_LOCATION.lat,
+          longitude: OFFICE_LOCATION.lng,
+        },
         distanceFromOffice: distance,
       });
+
+      return res.json({ message: "Checked in successfully", record });
     }
 
     if (type === "checkout") {
-      // Must exist before checkout
-      record = await CheckInOut.findOne({ user: userId, date: today });
+      // Find latest open checkin
+      const record = await CheckInOut.findOne({
+        user: userId,
+        date: today,
+        checkOutTime: null,
+      }).sort({ createdAt: -1 });
 
       if (!record) {
-        return res.status(400).json({ message: "No check-in found for today" });
-      }
-
-      if (record.checkOutTime) {
-        return res.status(400).json({ message: "Already checked out today" });
+        return res.status(400).json({ message: "No active check-in found to checkout" });
       }
 
       record.checkOutTime = new Date();
       record.type = "checkout";
-    //   record.selfieUrl = selfieUrl;
+      record.selfieUrl = selfieUrl;
       record.location = { latitude, longitude };
+      record.officeLocation = {
+        latitude: OFFICE_LOCATION.lat,
+        longitude: OFFICE_LOCATION.lng,
+      };
       record.distanceFromOffice = distance;
 
       await record.save();
+      return res.json({ message: "Checked out successfully", record });
     }
-
-    res.status(201).json({
-      message: `User ${type} successful`,
-      record,
-    });
   } catch (err) {
     next(err);
   }
 };
+
 
 export const getMyCheckIns = async (req, res, next) => {
   try {
@@ -101,8 +185,6 @@ export const getMyCheckIns = async (req, res, next) => {
     next(err);
   }
 };
-
-
 
 // Attendance Summary (monthly)
 export const getAttendanceSummary = async (req, res, next) => {
@@ -120,7 +202,10 @@ export const getAttendanceSummary = async (req, res, next) => {
 
     const records = await CheckInOut.find({
       user: userId,
-      date: { $gte: startDate.toISOString().split("T")[0], $lte: endDate.toISOString().split("T")[0] },
+      date: {
+        $gte: startDate.toISOString().split("T")[0],
+        $lte: endDate.toISOString().split("T")[0],
+      },
     });
 
     let totalDays = 0;
@@ -138,7 +223,9 @@ export const getAttendanceSummary = async (req, res, next) => {
 
       // Calculate working hours
       if (rec.checkInTime && rec.checkOutTime) {
-        const diff = (new Date(rec.checkOutTime) - new Date(rec.checkInTime)) / (1000 * 60 * 60);
+        const diff =
+          (new Date(rec.checkOutTime) - new Date(rec.checkInTime)) /
+          (1000 * 60 * 60);
         totalHours += diff;
       }
     });
@@ -156,7 +243,6 @@ export const getAttendanceSummary = async (req, res, next) => {
   }
 };
 
-
 // ---- Check In ----
 export const checkIn = async (req, res, next) => {
   try {
@@ -168,9 +254,18 @@ export const checkIn = async (req, res, next) => {
     }
 
     // Distance validation
-    const distance = calculateDistance(latitude, longitude, OFFICE_LOCATION.lat, OFFICE_LOCATION.lng);
+    const distance = calculateDistance(
+      latitude,
+      longitude,
+      OFFICE_LOCATION.lat,
+      OFFICE_LOCATION.lng
+    );
     if (distance > MAX_DISTANCE_METERS) {
-      return res.status(403).json({ message: `Check-in failed. You are ${Math.round(distance)}m away from office` });
+      return res.status(403).json({
+        message: `Check-in failed. You are ${Math.round(
+          distance
+        )}m away from office`,
+      });
     }
 
     const today = new Date().toISOString().split("T")[0];
@@ -180,18 +275,19 @@ export const checkIn = async (req, res, next) => {
     }
 
     const record = await CheckInOut.create({
-  user: userId,
-  type: "checkin", // required field
-  date: today,
-  checkInTime: new Date(),
-  selfieUrl,
-  location: { latitude, longitude },        // matches schema
-  officeLocation: {                         // required field
-    latitude: OFFICE_LOCATION.lat,
-    longitude: OFFICE_LOCATION.lng,
-  },
-  distanceFromOffice: distance,
-});
+      user: userId,
+      type: "checkin", // required field
+      date: today,
+      checkInTime: new Date(),
+      selfieUrl,
+      location: { latitude, longitude }, // matches schema
+      officeLocation: {
+        // required field
+        latitude: OFFICE_LOCATION.lat,
+        longitude: OFFICE_LOCATION.lng,
+      },
+      distanceFromOffice: distance,
+    });
 
     res.json({ message: "Checked in successfully", record });
   } catch (err) {
@@ -210,18 +306,27 @@ export const checkOut = async (req, res, next) => {
     }
 
     // Distance validation
-    const distance = calculateDistance(latitude, longitude, OFFICE_LOCATION.lat, OFFICE_LOCATION.lng);
+    const distance = calculateDistance(
+      latitude,
+      longitude,
+      OFFICE_LOCATION.lat,
+      OFFICE_LOCATION.lng
+    );
     if (distance > MAX_DISTANCE_METERS) {
-      return res
-        .status(403)
-        .json({ message: `Check-out failed. You are ${Math.round(distance)}m away from office` });
+      return res.status(403).json({
+        message: `Check-out failed. You are ${Math.round(
+          distance
+        )}m away from office`,
+      });
     }
 
     const today = new Date().toISOString().split("T")[0];
     const record = await CheckInOut.findOne({ user: userId, date: today });
 
     if (!record || record.checkOutTime) {
-      return res.status(400).json({ message: "No active check-in record found" });
+      return res
+        .status(400)
+        .json({ message: "No active check-in record found" });
     }
 
     // ✅ update according to schema
@@ -242,8 +347,6 @@ export const checkOut = async (req, res, next) => {
     next(err);
   }
 };
-
-
 
 // combine chekin and checkout controllers into one
 // export const checkInOut = async (req, res, next) => {
