@@ -58,15 +58,31 @@ export const getStaffLeads = async (req, res, next) => {
   }
 };
 
-// @desc Get all staff
+// @desc Get all staff (with optional filters)
 export const getStaffs = async (req, res, next) => {
   try {
-    const staffs = await Staff.find();
+    const filters = {};
+
+    if (req.query.name) {
+      filters.name = { $regex: req.query.name, $options: "i" }; // case-insensitive
+    }
+    if (req.query.email) {
+      filters.email = { $regex: req.query.email, $options: "i" };
+    }
+    if (req.query.phone) {
+      filters.phone = { $regex: req.query.phone, $options: "i" };
+    }
+    if (req.query.address) {
+      filters.address = { $regex: req.query.address, $options: "i" };
+    }
+
+    const staffs = await Staff.find(filters);
     res.json(staffs);
   } catch (err) {
     next(err);
   }
 };
+
 
 // @desc Get single staff
 export const getStaff = async (req, res, next) => {

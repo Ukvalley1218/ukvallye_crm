@@ -8,10 +8,12 @@ import reminderRoutes from "./routes/reminderRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
 import noteRoutes from "./routes/noteRoutes.js";
 import cors from "cors";
-
+import projectRoutes from "./routes/projectRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
 import authRoutes from "./routes/userAuthRoutes.js";
 import checkInOutRoutes from "./routes/checkInOutRoutes.js";
+import expenseRoutes from "./routes/expenseRoutes.js";
+import ticketRoutes from "./routes/ticketRoutes.js";
 
 dotenv.config();
 
@@ -44,6 +46,9 @@ app.use("/api/staff", staffRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/notes", noteRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/expenses", expenseRoutes);
+app.use("/api/tickets",ticketRoutes);
 
 // Routes
 app.get("/", (req, res) => {

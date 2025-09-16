@@ -9,10 +9,10 @@ import {
 } from "../controllers/leadController.js";
 
 const router = express.Router();
-router.get("/", getLeads);
-router.get("/:id", getLead);
-router.post("/", createLead);
-router.put("/:id", updateLead);
-router.delete("/:id", deleteLead);
+router.get("/", getLeads);  // Get all leads
+router.get("/:id", getLead);  // Get a specific lead by id
+router.post("/", createLead);  // Create a new lead
+router.put("/:id", updateLead);  //update a specific lead by id
+router.delete("/:id", deleteLead);  // Delete a specific lead by id
 
 export default router;
