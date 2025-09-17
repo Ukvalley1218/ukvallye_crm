@@ -7,6 +7,7 @@ const staffSchema = new mongoose.Schema(
     email: { type: String, lowercase: true, trim: true },
     phone: { type: String },
     address: { type: String },
+    
   },
   { timestamps: true }
 );

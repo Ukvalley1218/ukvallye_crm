@@ -23,6 +23,8 @@ export const getLeads = async (req, res, next) => {
       search,
       startDate,
       endDate,
+      page = 1,      // default page
+      limit = 10,    // default limit
     } = req.query;
 
     const filter = {};
@@ -44,7 +46,7 @@ export const getLeads = async (req, res, next) => {
     if (publicOnly === "true") filter.public = true;
     if (contactedToday === "true") filter.contactedToday = true;
 
-    // Global text search (name, email, phone, company, description)
+    // Global text search
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -55,7 +57,7 @@ export const getLeads = async (req, res, next) => {
       ];
     }
 
-    // Date range filter (createdAt)
+    // Date range filter
     if (startDate && endDate) {
       filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
     } else if (startDate) {
@@ -64,13 +66,33 @@ export const getLeads = async (req, res, next) => {
       filter.createdAt = { $lte: new Date(endDate) };
     }
 
-    const leads = await Lead.find(filter).populate("assign", "name email phone");
+    // Convert to numbers
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
 
-    res.json(leads);
+    // Count total documents
+    const total = await Lead.countDocuments(filter);
+
+    // Fetch paginated results
+    const leads = await Lead.find(filter)
+      .populate("assign", "name email phone")
+      .skip(skip)
+      .limit(limitNum)
+      .sort({ createdAt: -1 }); // optional: newest first
+
+    res.json({
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum),
+      limit: limitNum,
+      data: leads,
+    });
   } catch (err) {
     next(err);
   }
 };
+
 
 // @desc Get single lead
 export const getLead = async (req, res, next) => {
