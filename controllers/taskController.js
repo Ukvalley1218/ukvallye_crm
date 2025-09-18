@@ -2,7 +2,7 @@
 import Task from "../models/Tasks.js";
 
 // @desc Get all tasks
-export const getTasks = async (req, res, next) => {
+export const getTask = async (req, res, next) => {
   try {
     const tasks = await Task.findById(req.params.id)
       .populate("reminderid") // if tasks are linked to reminders
@@ -17,20 +17,45 @@ export const getTasks = async (req, res, next) => {
 };
 
 // @desc Get single task
-export const getTask = async (req, res, next) => {
+export const getTasks = async (req, res, next) => {
   try {
-    const task = await Task.find()
+    let { page = 1, limit = 10, search = "" } = req.query;
+
+    page = Number(page) || 1;
+    limit = Number(limit) || 10;
+
+    const filter = {};
+
+    // Optional search by task title or description
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const total = await Task.countDocuments(filter);
+
+    const tasks = await Task.find(filter)
       .populate("reminderid")
       .populate("staffid")
       .populate("leadid")
-      .populate("customerid");
+      .populate("customerid")
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
 
-    if (!task) return res.status(404).json({ message: "Task not found" });
-    res.json(task);
+    res.json({
+      tasks,
+      page,
+      pages: Math.ceil(total / limit),
+      total
+    });
   } catch (err) {
     next(err);
   }
 };
+
 
 // @desc Create new task
 export const createTask = async (req, res, next) => {
