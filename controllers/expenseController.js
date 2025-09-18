@@ -17,21 +17,35 @@ export const addExpense = async (req, res, next) => {
 // Get All Expenses (Admin)
 export const getAllExpenses = async (req, res, next) => {
   try {
-    const { month, year } = req.query;
-    let filter = {};
+    let { month, year, page = 1, limit = 10 } = req.query;
+
+    page = Number(page) || 1;
+    limit = Number(limit) || 10;
+
+    const filter = {};
 
     if (month) filter.month = month;
     if (year) filter.year = year;
 
+    const total = await Expense.countDocuments(filter);
+
     const expenses = await Expense.find(filter)
       .populate("user", "name email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
-    res.json(expenses);
+    res.json({
+      expenses,
+      page,
+      pages: Math.ceil(total / limit),
+      total
+    });
   } catch (err) {
     next(err);
   }
 };
+
 
 // Get My Expenses (Staff)
 export const getMyExpenses = async (req, res, next) => {

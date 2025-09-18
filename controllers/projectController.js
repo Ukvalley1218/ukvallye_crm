@@ -15,14 +15,35 @@ export const createProject = async (req, res, next) => {
 // Get All Projects
 export const getProjects = async (req, res, next) => {
   try {
-    const projects = await Project.find()
-      .populate("client", "name email") // show client name & email
-      .populate("assignedStaff", "name email"); // show staff name & email
-    res.json(projects);
+    let { page = 1, limit = 10, search = "" } = req.query;
+
+    page = Number(page) || 1;
+    limit = Number(limit) || 10;
+
+    const query = search
+      ? { name: { $regex: search, $options: "i" } } // case-insensitive search by project name
+      : {};
+
+    const total = await Project.countDocuments(query);
+
+    const projects = await Project.find(query)
+      .populate("client", "name email")
+      .populate("assignedStaff", "name email")
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 }); // newest first
+
+    res.json({
+      projects,
+      page,
+      pages: Math.ceil(total / limit),
+      total,
+    });
   } catch (err) {
     next(err);
   }
 };
+
 
 // Get Single Project
 export const getProject = async (req, res, next) => {

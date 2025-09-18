@@ -8,7 +8,7 @@ import Customer from "../models/Customer.js";
 // @desc Get all customers with filters
 export const getCustomers = async (req, res, next) => {
   try {
-    const { 
+    let { 
       company, 
       city, 
       state, 
@@ -18,20 +18,25 @@ export const getCustomers = async (req, res, next) => {
       assign, 
       search, 
       startDate, 
-      endDate 
+      endDate,
+      page = 1,
+      limit = 10
     } = req.query;
+
+    page = Number(page) || 1;
+    limit = Number(limit) || 10;
 
     const filter = {};
 
-    if (company) filter.company = { $regex: company, $options: "i" }; // case-insensitive
+    if (company) filter.company = { $regex: company, $options: "i" }; 
     if (city) filter.city = { $regex: city, $options: "i" };
     if (state) filter.state = { $regex: state, $options: "i" };
     if (country) filter.country = country;
     if (groups) filter.groups = groups;
     if (leadType) filter.leadType = leadType;
-    if (assign) filter.assign = assign; // filter by assigned staff
+    if (assign) filter.assign = assign;
 
-    // Global search (company, phone, website)
+    // Global search (company, phone, website, referar)
     if (search) {
       filter.$or = [
         { company: { $regex: search, $options: "i" } },
@@ -41,7 +46,7 @@ export const getCustomers = async (req, res, next) => {
       ];
     }
 
-    // Date range filter (createdAt)
+    // Date range filter
     if (startDate && endDate) {
       filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
     } else if (startDate) {
@@ -50,14 +55,25 @@ export const getCustomers = async (req, res, next) => {
       filter.createdAt = { $lte: new Date(endDate) };
     }
 
-    const customers = await Customer.find(filter)
-      .populate("assign", "name email role"); // show staff details
+    const total = await Customer.countDocuments(filter);
 
-    res.json(customers);
+    const customers = await Customer.find(filter)
+      .populate("assign", "name email role")
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    res.json({
+      customers,
+      page,
+      pages: Math.ceil(total / limit),
+      total
+    });
   } catch (err) {
     next(err);
   }
 };
+
 
 // @desc Create customer
 export const createCustomer = async (req, res, next) => {
