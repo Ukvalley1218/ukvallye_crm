@@ -58,13 +58,18 @@ export const getStaffLeads = async (req, res, next) => {
   }
 };
 
-// @desc Get all staff (with optional filters)
+// @desc Get all staff (with optional filters and pagination)
 export const getStaffs = async (req, res, next) => {
   try {
+    let { page = 1, limit = 10 } = req.query;
+
+    page = Number(page) || 1;
+    limit = Number(limit) || 10;
+
     const filters = {};
 
     if (req.query.name) {
-      filters.name = { $regex: req.query.name, $options: "i" }; // case-insensitive
+      filters.name = { $regex: req.query.name, $options: "i" };
     }
     if (req.query.email) {
       filters.email = { $regex: req.query.email, $options: "i" };
@@ -76,8 +81,19 @@ export const getStaffs = async (req, res, next) => {
       filters.address = { $regex: req.query.address, $options: "i" };
     }
 
-    const staffs = await Staff.find(filters);
-    res.json(staffs);
+    const total = await Staff.countDocuments(filters);
+
+    const staffs = await Staff.find(filters)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    res.json({
+      staffs,
+      page,
+      pages: Math.ceil(total / limit),
+      total
+    });
   } catch (err) {
     next(err);
   }
