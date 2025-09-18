@@ -14,7 +14,7 @@ import authRoutes from "./routes/authRoutes.js";
 import checkInOutRoutes from "./routes/checkInOutRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
-
+import userRoutes from "./routes/userRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -39,6 +39,7 @@ app.use(express.json());
 
 app.use("/api/auth",authRoutes);
 app.use("/api/checkinout",checkInOutRoutes);
+app.use("/api/users",userRoutes);
 // Routes
 app.use("/api/leads", leadRoutes);
 app.use("/api/customers",customerRoutes);
