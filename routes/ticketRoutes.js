@@ -1,15 +1,15 @@
 import express from 'express';
 
 import { createTicket,getAllTickets,getMyTickets,getTicket,updateTicket,deleteTicket } from '../controllers/ticketController.js';
-import { auth } from '../middleware/auth.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Customer raises ticket
-router.post("/", auth, createTicket);
+router.post("/", protect, createTicket);
 
 // Customer views own tickets
-router.get("/my", auth, getMyTickets);
+router.get("/my", protect, getMyTickets);
 
 // Staff/Admin views all tickets
 router.get("/",getAllTickets);

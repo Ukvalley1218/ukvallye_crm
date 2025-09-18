@@ -10,7 +10,7 @@ import noteRoutes from "./routes/noteRoutes.js";
 import cors from "cors";
 import projectRoutes from "./routes/projectRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
-import authRoutes from "./routes/userAuthRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import checkInOutRoutes from "./routes/checkInOutRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
@@ -36,8 +36,8 @@ app.use(cors({
 app.use(express.json());
 
 // auth route
-app.use("/api/auth",authRoutes);
 
+app.use("/api/auth",authRoutes);
 app.use("/api/checkinout",checkInOutRoutes);
 // Routes
 app.use("/api/leads", leadRoutes);

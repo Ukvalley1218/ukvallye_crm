@@ -1,6 +1,6 @@
 import express from 'express';
 import { addExpense,updateExpenseStatus,getAllExpenses,getMyExpenses,deleteExpense } from '../controllers/expenseController.js';
-import { auth } from '../middleware/auth.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -8,8 +8,8 @@ const router = express.Router();
 // add authMiddleware when you have admin access
 
 
-router.post("/", auth,addExpense);
-router.get("/my", auth,getMyExpenses);
+router.post("/", protect,addExpense);
+router.get("/my", protect,getMyExpenses);
 
 // Admin: Get All Expenses
 router.get("/", getAllExpenses);
