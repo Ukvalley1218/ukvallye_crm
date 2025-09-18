@@ -15,6 +15,8 @@ import checkInOutRoutes from "./routes/checkInOutRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import statRoutes from "./routes/statRoutes.js"
+
 dotenv.config();
 
 const app = express();
@@ -35,6 +37,8 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 
+// count route
+app.use("/api/stats",statRoutes);
 // auth route
 
 app.use("/api/auth",authRoutes);
