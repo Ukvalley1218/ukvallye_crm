@@ -83,7 +83,7 @@ export const getUsers = async (req, res, next) => {
 
     const total = await User.countDocuments(filters);
 
-    const Users = await User.find(filters)
+    const staffs = await User.find(filters)
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
