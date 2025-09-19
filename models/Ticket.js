@@ -16,7 +16,7 @@ const ticketSchema = new mongoose.Schema(
       enum: ["Low", "Medium", "High", "Urgent"],
       default: "Medium",
     },
-    assignedStaff: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" }, // staff handling
+    assignedStaff: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // staff handling
     //createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },     // who created (optional)
   },
   { timestamps: true }

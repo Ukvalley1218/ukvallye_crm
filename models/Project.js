@@ -11,7 +11,7 @@ const projectSchema = new mongoose.Schema(
       default: "Pending",
     },
     client: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" }, // Link to Customer
-    assignedStaff: [{ type: mongoose.Schema.Types.ObjectId, ref: "Staff" }], // Staff assigned
+    assignedStaff: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // Staff assigned
     budget: { type: Number },                                   // Optional budget
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },       // Admin/creator
   },

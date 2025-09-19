@@ -18,7 +18,7 @@ const leadSchema = new mongoose.Schema(
     leadValue: { type: Number, default: 0 },
     status: { type: String, default: "Non selected" }, // dropdown
     source: { type: String, default: "Non selected" }, // dropdown
-    assign: [{ type: mongoose.Schema.Types.ObjectId, ref: "Staff" , default: null }],
+    assign: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" , default: null }],
     tags: [{ type: String }],
 
     description: { type: String },
@@ -28,6 +28,9 @@ const leadSchema = new mongoose.Schema(
     leadType: { type: String, default: "Other" },
 
     defaultLanguage: { type: String, default: "System Default" },
+    // ✅ Calendar fields
+    start: { type: Date },  
+    end: { type: Date },
   },
   { timestamps: true }
 );

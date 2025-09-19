@@ -1,56 +1,56 @@
-// controllers/staffController.js
-import Staff from "../models/Staff.js";
+// controllers/UserController.js
+import User from "../models/User.js";
 import Lead from "../models/Lead.js";
 
 
 
-// @desc Search staff by name and return their leads
-// @desc Search staff by name and return their leads
-export const searchStaffWithLeads = async (req, res, next) => {
+// @desc Search User by name and return their leads
+// @desc Search User by name and return their leads
+export const searchUserWithLeads = async (req, res, next) => {
   try {
     const { name } = req.query;
     if (!name) {
       return res.status(400).json({ message: "Name query is required" });
     }
 
-    // Find all staff with matching name (case-insensitive, partial)
-    const staffList = await Staff.find({
+    // Find all User with matching name (case-insensitive, partial)
+    const UserList = await User.find({
       name: { $regex: name, $options: "i" },
     });
 
-    if (!staffList.length) {
-      return res.status(404).json({ message: "No staff found" });
+    if (!UserList.length) {
+      return res.status(404).json({ message: "No User found" });
     }
 
-    // For each staff, get their leads
-    const staffWithLeads = await Promise.all(
-      staffList.map(async (staff) => {
-        const leads = await Lead.find({ assign: staff._id });
-        return { staff, leads };
+    // For each User, get their leads
+    const UserWithLeads = await Promise.all(
+      UserList.map(async (User) => {
+        const leads = await Lead.find({ assign: User._id });
+        return { User, leads };
       })
     );
 
-    res.json(staffWithLeads);
+    res.json(UserWithLeads);
   } catch (err) {
     next(err);
   }
 };
 
 
-// Optionally: Get leads by staffId
-export const getStaffLeads = async (req, res, next) => {
+// Optionally: Get leads by UserId
+export const getUserLeads = async (req, res, next) => {
   try {
-    const staffId = req.params.id;
+    const UserId = req.params.id;
 
-    const staff = await Staff.findById(staffId);
-    if (!staff) {
-      return res.status(404).json({ message: "Staff not found" });
+    const User = await User.findById(UserId);
+    if (!User) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const leads = await Lead.find({ assign: staffId });
+    const leads = await Lead.find({ assign: UserId });
 
     res.json({
-      staff,
+      User,
       leads,
     });
   } catch (err) {
@@ -58,8 +58,8 @@ export const getStaffLeads = async (req, res, next) => {
   }
 };
 
-// @desc Get all staff (with optional filters and pagination)
-export const getStaffs = async (req, res, next) => {
+// @desc Get all User (with optional filters and pagination)
+export const getUsers = async (req, res, next) => {
   try {
     let { page = 1, limit = 10 } = req.query;
 
@@ -81,15 +81,15 @@ export const getStaffs = async (req, res, next) => {
       filters.address = { $regex: req.query.address, $options: "i" };
     }
 
-    const total = await Staff.countDocuments(filters);
+    const total = await User.countDocuments(filters);
 
-    const staffs = await Staff.find(filters)
+    const Users = await User.find(filters)
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
 
     res.json({
-      staffs,
+      Users,
       page,
       pages: Math.ceil(total / limit),
       total
@@ -100,47 +100,47 @@ export const getStaffs = async (req, res, next) => {
 };
 
 
-// @desc Get single staff
-export const getStaff = async (req, res, next) => {
+// @desc Get single User
+export const getUser = async (req,res,next)=>{
   try {
-    const staff = await Staff.findById(req.params.id);
-    if (!staff) return res.status(404).json({ message: "Staff not found" });
-    res.json(staff);
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    next(error)
+  }
+}
+
+// @desc Create new User
+export const createUser = async (req, res, next) => {
+  try {
+    const User = await User.create(req.body);
+    res.status(201).json(User);
   } catch (err) {
     next(err);
   }
 };
 
-// @desc Create new staff
-export const createStaff = async (req, res, next) => {
+// @desc Update User
+export const updateUser = async (req, res, next) => {
   try {
-    const staff = await Staff.create(req.body);
-    res.status(201).json(staff);
-  } catch (err) {
-    next(err);
-  }
-};
-
-// @desc Update staff
-export const updateStaff = async (req, res, next) => {
-  try {
-    const staff = await Staff.findByIdAndUpdate(req.params.id, req.body, {
+    const User = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
-    if (!staff) return res.status(404).json({ message: "Staff not found" });
-    res.json(staff);
+    if (!User) return res.status(404).json({ message: "User not found" });
+    res.json(User);
   } catch (err) {
     next(err);
   }
 };
 
-// @desc Delete staff
-export const deleteStaff = async (req, res, next) => {
+// @desc Delete User
+export const deleteUser = async (req, res, next) => {
   try {
-    const staff = await Staff.findByIdAndDelete(req.params.id);
-    if (!staff) return res.status(404).json({ message: "Staff not found" });
-    res.json({ message: "Staff deleted" });
+    const User = await User.findByIdAndDelete(req.params.id);
+    if (!User) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User deleted" });
   } catch (err) {
     next(err);
   }

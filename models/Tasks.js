@@ -2,13 +2,19 @@ import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema(
   {
-    reminderid: { type: mongoose.Schema.Types.ObjectId, ref: "Reminders",default:null }, // optional link to reminder
-    leadid: { type: mongoose.Schema.Types.ObjectId, ref: "Lead",default:null },         // optional link to lead
-    customerid: { type: mongoose.Schema.Types.ObjectId, ref: "Customer",default:null }, // optional link to customer
-    staffid: { type: mongoose.Schema.Types.ObjectId, ref: "Staff",default:null }, // assigned staff
-    title: { type: String},
+    reminderid: { type: mongoose.Schema.Types.ObjectId, ref: "Reminders", default: null },
+    leadid: { type: mongoose.Schema.Types.ObjectId, ref: "Lead", default: null },
+    customerid: { type: mongoose.Schema.Types.ObjectId, ref: "Customer", default: null },
+    staffid: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+
+    title: { type: String },
     description: { type: String },
-    dueDateTime: { type: Date},
+    dueDateTime: { type: Date },
+
+    // ✅ Calendar fields
+    start: { type: Date },  
+    end: { type: Date },    
+
     priority: {
       type: String,
       enum: ["low", "medium", "high"],
@@ -27,6 +33,7 @@ const taskSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 
 const Task = mongoose.model("Task", taskSchema);
 export default Task;

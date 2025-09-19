@@ -23,11 +23,18 @@ export const getLeads = async (req, res, next) => {
       search,
       startDate,
       endDate,
-      page = 1,      // default page
-      limit = 10,    // default limit
+      page = 1, // default page
+      limit = 10, // default limit
     } = req.query;
 
     const filter = {};
+    // 🔹 Role-based access
+    // if (req.user.role === "staff") {
+    //   filter.assign = req.user._id; // staff can only see their leads
+    // } else if (assign) {
+    //   // for admins/managers, allow optional filter by assign
+    //   filter.assign = assign;
+    // }
 
     if (name) filter.name = { $regex: name, $options: "i" };
     if (email) filter.email = { $regex: email, $options: "i" };
@@ -93,11 +100,13 @@ export const getLeads = async (req, res, next) => {
   }
 };
 
-
 // @desc Get single lead
 export const getLead = async (req, res, next) => {
   try {
-    const lead = await Lead.findById(req.params.id).populate("assign", "name email phone");
+    const lead = await Lead.findById(req.params.id).populate(
+      "assign",
+      "name email phone"
+    );
     if (!lead) return res.status(404).json({ message: "Lead not found" });
     res.json(lead);
   } catch (err) {
@@ -105,11 +114,13 @@ export const getLead = async (req, res, next) => {
   }
 };
 
-
 // @desc Create new lead
 export const createLead = async (req, res, next) => {
   try {
-    const lead = await Lead.create(req.body);
+    const lead = await Lead.create({
+      ...req.body,
+      //assign: req.user._id, // store auth user ID here
+    });
     res.status(201).json(lead);
   } catch (err) {
     next(err);
@@ -140,8 +151,6 @@ export const deleteLead = async (req, res, next) => {
     next(err);
   }
 };
-
-
 
 // create/update lead APIs so that if you pass staff name instead of _id, it will automatically
 // @desc Get all leads

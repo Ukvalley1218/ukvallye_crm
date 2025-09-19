@@ -30,7 +30,7 @@ const customerSchema = new mongoose.Schema(
     referar: { type: String, trim: true },
     leadType: { type: String, trim: true },
 
-    assign: [{ type: mongoose.Schema.Types.ObjectId, ref: "Staff" , default: null }],
+    assign: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" , default: null }],
   },
   { timestamps: true }
 );

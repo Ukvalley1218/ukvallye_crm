@@ -7,8 +7,10 @@ import {
   updateLead,
   deleteLead,
 } from "../controllers/leadController.js";
+import { protect,authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
 router.get("/", getLeads);  // Get all leads
 router.get("/:id", getLead);  // Get a specific lead by id
 router.post("/", createLead);  // Create a new lead
