@@ -1,5 +1,5 @@
 import express from 'express';
-import { addExpense,updateExpenseStatus,getAllExpenses,getMyExpenses,deleteExpense } from '../controllers/expenseController.js';
+import { addExpense,updateExpenseStatus,getAllExpenses,getMyExpenses,deleteExpense,getExpenseById } from '../controllers/expenseController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -13,6 +13,8 @@ router.get("/my",getMyExpenses);
 
 // Admin: Get All Expenses
 router.get("/", getAllExpenses);
+
+router.get("/:id", getExpenseById);
 
 // Admin: Update Status (Approve/Reject)
 router.put("/:id/status", updateExpenseStatus);
