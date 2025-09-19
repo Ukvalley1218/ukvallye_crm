@@ -5,7 +5,7 @@ import Note from "../models/Notes.js";
 // @desc Get all notes with filters
 export const getNotes = async (req, res, next) => {
   try {
-    const { leadid, customerid, staffid, tag, search, startDate, endDate } = req.query;
+    const { leadid, customerid, staffid, tag, search, startDate, endDate, page = 1, limit = 10 } = req.query;
 
     const filter = {};
 
@@ -28,16 +28,33 @@ export const getNotes = async (req, res, next) => {
       filter.createdAt = { $lte: new Date(endDate) };
     }
 
+    const pageNumber = Number(page) || 1;
+    const limitNumber = Number(limit) || 10;
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Count total documents for pagination info
+    const total = await Note.countDocuments(filter);
+
     const notes = await Note.find(filter)
       .populate("leadid")
       .populate("customerid")
-      .populate("staffid");
+      .populate("staffid")
+      .sort({ createdAt: -1 }) // optional: latest notes first
+      .skip(skip)
+      .limit(limitNumber);
 
-    res.json(notes);
+    res.json({
+      total,
+      page: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+      limit: limitNumber,
+      data: notes,
+    });
   } catch (err) {
     next(err);
   }
 };
+
 
 // @desc Get single note
 export const getNote = async (req, res, next) => {
