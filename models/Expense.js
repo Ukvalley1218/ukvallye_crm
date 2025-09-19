@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const expenseSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // staff who added
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // staff who added
     date: { type: Date, default: Date.now },                                     // expense date
     category: {
       type: String,
