@@ -114,8 +114,8 @@ export const getUser = async (req,res,next)=>{
 // @desc Create new User
 export const createUser = async (req, res, next) => {
   try {
-    const User = await User.create(req.body);
-    res.status(201).json(User);
+    const user = await User.create(req.body);
+    res.status(201).json(user);
   } catch (err) {
     next(err);
   }
@@ -124,12 +124,12 @@ export const createUser = async (req, res, next) => {
 // @desc Update User
 export const updateUser = async (req, res, next) => {
   try {
-    const User = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
-    if (!User) return res.status(404).json({ message: "User not found" });
-    res.json(User);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
   } catch (err) {
     next(err);
   }
@@ -138,8 +138,8 @@ export const updateUser = async (req, res, next) => {
 // @desc Delete User
 export const deleteUser = async (req, res, next) => {
   try {
-    const User = await User.findByIdAndDelete(req.params.id);
-    if (!User) return res.status(404).json({ message: "User not found" });
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.json({ message: "User deleted" });
   } catch (err) {
     next(err);
