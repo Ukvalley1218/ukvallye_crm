@@ -14,7 +14,7 @@ const leadSchema = new mongoose.Schema(
     country: { type: String, default: "India" },
     zipCode: { type: String },
     company: { type: String },
-
+title:{ type: String, default: "Other"  },
     leadValue: { type: Number, default: 0 },
     status: { type: String, default: "Non selected" }, // dropdown
     source: { type: String, default: "Non selected" }, // dropdown
