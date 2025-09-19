@@ -89,7 +89,7 @@ export const getUsers = async (req, res, next) => {
       .sort({ createdAt: -1 });
 
     res.json({
-      Users,
+      staffs,
       page,
       pages: Math.ceil(total / limit),
       total
