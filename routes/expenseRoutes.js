@@ -8,8 +8,8 @@ const router = express.Router();
 // add authMiddleware when you have admin access
 
 
-router.post("/", protect,addExpense);
-router.get("/my", protect,getMyExpenses);
+router.post("/",addExpense);
+router.get("/my",getMyExpenses);
 
 // Admin: Get All Expenses
 router.get("/", getAllExpenses);

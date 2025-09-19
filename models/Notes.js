@@ -10,6 +10,7 @@ const noteSchema = new mongoose.Schema(
     // Note details
     content: { type: String, required: true }, // actual note text
     tags: [{ type: String }], // optional tags like ["important", "follow-up"]
+   date:{type: Date, default: Date.now},
   },
   { timestamps: true } // auto-manages createdAt & updatedAt
 );
