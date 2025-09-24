@@ -21,6 +21,8 @@ router.get(
   authorize("staff","admin", "superadmin"), // only admin/superadmin can see all staff
   getUsers
 );
+// me 
+router.get("/me",protect,me);
 
 router.get("/:id", protect, authorize("staff", "admin", "superadmin"), getUser);
 
@@ -53,8 +55,7 @@ router.get(
   searchUserWithLeads
 );
 
-// me 
-router.get("/me",protect,me);
+
 
 router.get(
   "/:id/leads",
