@@ -104,7 +104,7 @@ export const getUsers = async (req, res, next) => {
 // get me
 export const me = async (req,res,next)=>{
   try {
-    const user= User.findById(req.user._id);
+    const user=await User.findById(req.user._id);
     res.json(user);
     
   } catch (error) {
