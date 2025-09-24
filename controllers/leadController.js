@@ -161,9 +161,9 @@ export const updateLead = async (req, res, next) => {
     if (!lead) return res.status(404).json({ message: "Lead not found" });
 
     // Staff → can only update their own leads
-    if (req.user.role === "staff" && lead.assign.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Access denied" });
-    }
+    // if (req.user.role === "staff" && lead.assign.toString() !== req.user._id.toString()) {
+    //   return res.status(403).json({ message: "Access denied" });
+    // }
 
     const updatedLead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
