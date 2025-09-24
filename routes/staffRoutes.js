@@ -7,6 +7,7 @@ import {
   getUsers,
   searchUserWithLeads,
   getUserLeads,
+  me,
 } from "../controllers/staffController.js";
 
 import { protect,authorize } from "../middleware/authMiddleware.js";
@@ -51,6 +52,9 @@ router.get(
   authorize("admin", "superadmin"),
   searchUserWithLeads
 );
+
+// me 
+router.get("/me",protect,me);
 
 router.get(
   "/:id/leads",

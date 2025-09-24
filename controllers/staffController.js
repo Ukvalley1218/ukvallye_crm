@@ -56,7 +56,7 @@ export const getUserLeads = async (req, res, next) => {
   }
 };
 
-// @desc Get all User (with optional filters and pagination)
+// @desc Get all Users (with optional filters and pagination)
 export const getUsers = async (req, res, next) => {
   try {
     let { page = 1, limit = 10 } = req.query;
@@ -73,36 +73,53 @@ export const getUsers = async (req, res, next) => {
       filters.email = { $regex: req.query.email, $options: "i" };
     }
     if (req.query.phone) {
+      // since phone is Number, match exact or partial with regex on string
       filters.phone = { $regex: req.query.phone, $options: "i" };
     }
-    if (req.query.address) {
-      filters.address = { $regex: req.query.address, $options: "i" };
+    if (req.query.birthdate) {
+      filters.birthdate = new Date(req.query.birthdate);
+    }
+    if (req.query.role) {
+      filters.role = req.query.role;
     }
 
     const total = await User.countDocuments(filters);
 
-    const staffs = await User.find(filters)
+    const users = await User.find(filters)
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
 
     res.json({
-      staffs,
+      users,
       page,
       pages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (err) {
     next(err);
   }
 };
 
+// get me
+export const me = async(req,res,next)=>{
+  try {
+    const user= User.findById(req.user._id);
+    res.json(user);
+    
+  } catch (error) {
+    next(error);
+  }
+}
 
 // @desc Get single User
 export const getUser = async (req, res, next) => {
   try {
     // staff can only see their own profile
-    if (req.user.role === "staff" && req.user._id.toString() !== req.params.id) {
+    if (
+      req.user.role === "staff" &&
+      req.user._id.toString() !== req.params.id
+    ) {
       return res.status(403).json({ message: "Access denied" });
     }
 
@@ -115,11 +132,26 @@ export const getUser = async (req, res, next) => {
   }
 };
 
-
 // @desc Create new User
 export const createUser = async (req, res, next) => {
   try {
-    const user = await User.create(req.body);
+    const { name, email, password, phone, birthdate, role } = req.body;
+
+    // check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      phone,
+      birthdate,
+      role,
+    });
+
     res.status(201).json(user);
   } catch (err) {
     next(err);
@@ -129,11 +161,25 @@ export const createUser = async (req, res, next) => {
 // @desc Update User
 export const updateUser = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+
+    // prevent direct password overwrite unless intentional
+    if (updateData.password) {
+      // let pre("save") handle hashing
+      const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      user.set(updateData);
+      await user.save();
+      return res.json(user);
+    }
+
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });
+
     if (!user) return res.status(404).json({ message: "User not found" });
+
     res.json(user);
   } catch (err) {
     next(err);
