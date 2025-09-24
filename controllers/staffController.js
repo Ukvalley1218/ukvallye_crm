@@ -40,19 +40,17 @@ export const searchUserWithLeads = async (req, res, next) => {
 // Optionally: Get leads by UserId
 export const getUserLeads = async (req, res, next) => {
   try {
-    const UserId = req.params.id;
-
-    const User = await User.findById(UserId);
-    if (!User) {
-      return res.status(404).json({ message: "User not found" });
+    // staff can only see their own leads
+    if (req.user.role === "staff" && req.user._id.toString() !== req.params.id) {
+      return res.status(403).json({ message: "Access denied" });
     }
 
-    const leads = await Lead.find({ assign: UserId });
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json({
-      User,
-      leads,
-    });
+    const leads = await Lead.find({ assign: req.params.id });
+
+    res.json({ user, leads });
   } catch (err) {
     next(err);
   }
@@ -101,15 +99,22 @@ export const getUsers = async (req, res, next) => {
 
 
 // @desc Get single User
-export const getUser = async (req,res,next)=>{
+export const getUser = async (req, res, next) => {
   try {
+    // staff can only see their own profile
+    if (req.user.role === "staff" && req.user._id.toString() !== req.params.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
+
     res.json(user);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
+
 
 // @desc Create new User
 export const createUser = async (req, res, next) => {

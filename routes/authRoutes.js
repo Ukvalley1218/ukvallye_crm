@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser,loginUser } from "../controllers/authController.js";
+import { registerUser,loginUser,getMe } from "../controllers/authController.js";
 import { protect,authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -19,5 +19,6 @@ router.get("/admin-only", protect, authorize("admin", "superadmin"), (req, res) 
 router.get("/superadmin-only", protect, authorize("superadmin"), (req, res) => {
   res.json({ message: "Hello Superadmin" });
 });
-
+// backend/routes/authRoutes.js
+router.get("/me", protect, getMe);
 export default router;

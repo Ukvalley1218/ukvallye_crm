@@ -1,15 +1,62 @@
 import express from "express";
+import {
+  getUser,
+  createUser,
+  deleteUser,
+  updateUser,
+  getUsers,
+  searchUserWithLeads,
+  getUserLeads,
+} from "../controllers/staffController.js";
 
-import { getUser,createUser,deleteUser,updateUser,getUsers,searchUserWithLeads,getUserLeads } from "../controllers/staffController.js";
+import { protect,authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-router.get("/", getUsers);  // GET all Users
-router.get("/:id", getUser);  // GET a specific User by ID
-router.post("/", createUser);  // Create a new User
-router.put("/:id", updateUser);  // Update an existing User
-router.delete("/:id", deleteUser);  // Delete a User
 
-router.get("/search", searchUserWithLeads); // ?name=Rahul
-router.get("/:id/leads", getUserLeads);  // GET leads assigned to a specific User
+// Staff Routes
+router.get(
+  "/",
+  protect,
+  authorize("staff","admin", "superadmin"), // only admin/superadmin can see all staff
+  getUsers
+);
+
+router.get("/:id", protect, authorize("staff", "admin", "superadmin"), getUser);
+
+router.post(
+  "/",
+  protect,
+  authorize("admin", "superadmin"), // only admin/superadmin can create staff
+  createUser
+);
+
+router.put(
+  "/:id",
+  protect,
+  authorize("staff", "admin", "superadmin"),
+  updateUser
+);
+
+router.delete(
+  "/:id",
+  protect,
+  authorize("admin","superadmin"), // only superadmin can delete staff
+  deleteUser
+);
+
+// Extra Routes
+router.get(
+  "/search",
+  protect,
+  authorize("admin", "superadmin"),
+  searchUserWithLeads
+);
+
+router.get(
+  "/:id/leads",
+  protect,
+  authorize("staff", "admin", "superadmin"),
+  getUserLeads
+);
 
 export default router;

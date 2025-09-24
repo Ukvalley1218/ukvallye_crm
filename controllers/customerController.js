@@ -8,51 +8,16 @@ import Customer from "../models/Customer.js";
 // @desc Get all customers with filters
 export const getCustomers = async (req, res, next) => {
   try {
-    let { 
-      company, 
-      city, 
-      state, 
-      country, 
-      groups, 
-      leadType, 
-      assign, 
-      search, 
-      startDate, 
-      endDate,
-      page = 1,
-      limit = 10
-    } = req.query;
+    let { page = 1, limit = 10, ...query } = req.query;
 
     page = Number(page) || 1;
     limit = Number(limit) || 10;
 
-    const filter = {};
+    const filter = { ...query };
 
-    if (company) filter.company = { $regex: company, $options: "i" }; 
-    if (city) filter.city = { $regex: city, $options: "i" };
-    if (state) filter.state = { $regex: state, $options: "i" };
-    if (country) filter.country = country;
-    if (groups) filter.groups = groups;
-    if (leadType) filter.leadType = leadType;
-    if (assign) filter.assign = assign;
-
-    // Global search (company, phone, website, referar)
-    if (search) {
-      filter.$or = [
-        { company: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-        { website: { $regex: search, $options: "i" } },
-        { referar: { $regex: search, $options: "i" } }
-      ];
-    }
-
-    // Date range filter
-    if (startDate && endDate) {
-      filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
-    } else if (startDate) {
-      filter.createdAt = { $gte: new Date(startDate) };
-    } else if (endDate) {
-      filter.createdAt = { $lte: new Date(endDate) };
+    // If staff, only return customers assigned to them
+    if (req.user.role === "staff") {
+      filter.assign = req.user._id;
     }
 
     const total = await Customer.countDocuments(filter);
@@ -67,12 +32,13 @@ export const getCustomers = async (req, res, next) => {
       customers,
       page,
       pages: Math.ceil(total / limit),
-      total
+      total,
     });
   } catch (err) {
     next(err);
   }
 };
+
 
 
 // @desc Create customer
@@ -88,30 +54,54 @@ export const createCustomer = async (req, res, next) => {
 // @desc Get single customer
 export const getCustomerById = async (req, res, next) => {
   try {
-    const customer = await Customer.findById(req.params.id).populate("assign", "name email role");
+    const customer = await Customer.findById(req.params.id).populate(
+      "assign",
+      "name email role"
+    );
+
     if (!customer) return res.status(404).json({ message: "Customer not found" });
+
+    // Staff can only see their own customers
+    if (req.user.role === "staff" && customer.assign?._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     res.json(customer);
   } catch (err) {
     next(err);
   }
 };
+
 
 // @desc Update customer
 export const updateCustomer = async (req, res, next) => {
   try {
-    const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const customer = await Customer.findById(req.params.id);
     if (!customer) return res.status(404).json({ message: "Customer not found" });
-    res.json(customer);
+
+    // Staff can only update their own customers
+    if (req.user.role === "staff" && customer.assign?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const updated = await Customer.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.json(updated);
   } catch (err) {
     next(err);
   }
 };
 
+
 // @desc Delete customer
 export const deleteCustomer = async (req, res, next) => {
   try {
-    const customer = await Customer.findByIdAndDelete(req.params.id);
+    const customer = await Customer.findById(req.params.id);
     if (!customer) return res.status(404).json({ message: "Customer not found" });
+
+    // Only superadmin can delete → route already enforces it
+    await customer.deleteOne();
     res.json({ message: "Customer removed" });
   } catch (err) {
     next(err);

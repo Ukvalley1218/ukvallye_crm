@@ -6,7 +6,7 @@ export const addExpense = async (req, res, next) => {
   try {
     const expense = await Expense.create({
       ...req.body,
-      //user: req.user._id,
+      user: req.user._id, // link expense to logged-in staff
     });
     res.status(201).json(expense);
   } catch (err) {
@@ -48,14 +48,19 @@ export const getAllExpenses = async (req, res, next) => {
 
 export const getExpenseById = async (req, res, next) => {
   try {
-    const expense = await Expense.findById(req.params.id);
+    const expense = await Expense.findById(req.params.id).populate("user", "name email role");
     if (!expense) return res.status(404).json({ message: "Expense not found" });
+
+    // Staff can only view their own expenses
+    if (req.user.role === "staff" && expense.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     res.json(expense);
-    
   } catch (error) {
-    req.status(404).json({ message: "Expense not found" });
+    next(error);
   }
-}
+};
 // Get My Expenses (Staff)
 export const getMyExpenses = async (req, res, next) => {
   try {

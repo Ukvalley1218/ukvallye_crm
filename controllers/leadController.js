@@ -1,6 +1,6 @@
 import Lead from "../models/Lead.js";
-import Staff from "../models/Staff.js";
-// controllers/leadController.js
+import User from "../models/User.js";
+import { notifyUser } from "../utils/notify.js";
 
 // @desc Get all leads with filters
 export const getLeads = async (req, res, next) => {
@@ -23,19 +23,24 @@ export const getLeads = async (req, res, next) => {
       search,
       startDate,
       endDate,
-      page = 1, // default page
-      limit = 10, // default limit
+      page = 1,
+      limit = 10,
     } = req.query;
 
     const filter = {};
-    // 🔹 Role-based access
-    // if (req.user.role === "staff") {
-    //   filter.assign = req.user._id; // staff can only see their leads
-    // } else if (assign) {
-    //   // for admins/managers, allow optional filter by assign
-    //   filter.assign = assign;
-    // }
 
+    // 🔹 Role-based filtering
+    if (req.user.role === "staff") {
+      filter.assign = req.user._id; // staff → only their leads
+    } else if (req.user.role === "admin") {
+      // Admin can see all leads, but optionally filter by "assign"
+      if (assign) filter.assign = assign;
+    } else if (req.user.role === "superadmin") {
+      // Superadmin sees all leads, but can still apply query filters
+      if (assign) filter.assign = assign;
+    }
+
+    // Filters
     if (name) filter.name = { $regex: name, $options: "i" };
     if (email) filter.email = { $regex: email, $options: "i" };
     if (phone) filter.phone = { $regex: phone, $options: "i" };
@@ -43,17 +48,13 @@ export const getLeads = async (req, res, next) => {
     if (city) filter.city = { $regex: city, $options: "i" };
     if (state) filter.state = { $regex: state, $options: "i" };
     if (country) filter.country = country;
-
     if (status) filter.status = status;
     if (source) filter.source = source;
     if (leadType) filter.leadType = leadType;
-    if (assign) filter.assign = assign;
     if (tag) filter.tags = { $in: [tag] };
-
     if (publicOnly === "true") filter.public = true;
     if (contactedToday === "true") filter.contactedToday = true;
 
-    // Global text search
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -64,7 +65,6 @@ export const getLeads = async (req, res, next) => {
       ];
     }
 
-    // Date range filter
     if (startDate && endDate) {
       filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
     } else if (startDate) {
@@ -73,20 +73,17 @@ export const getLeads = async (req, res, next) => {
       filter.createdAt = { $lte: new Date(endDate) };
     }
 
-    // Convert to numbers
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    // Count total documents
     const total = await Lead.countDocuments(filter);
 
-    // Fetch paginated results
     const leads = await Lead.find(filter)
       .populate("assign", "name email phone")
       .skip(skip)
       .limit(limitNum)
-      .sort({ createdAt: -1 }); // optional: newest first
+      .sort({ createdAt: -1 });
 
     res.json({
       total,
@@ -108,6 +105,12 @@ export const getLead = async (req, res, next) => {
       "name email phone"
     );
     if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+    // Staff can only see their leads
+    if (req.user.role === "staff" && lead.assign.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     res.json(lead);
   } catch (err) {
     next(err);
@@ -117,25 +120,58 @@ export const getLead = async (req, res, next) => {
 // @desc Create new lead
 export const createLead = async (req, res, next) => {
   try {
-    const lead = await Lead.create({
+    // Normalize assign to array of User ObjectIds
+    const assignInput = req.body.assign;
+    const assignedUserIds = Array.isArray(assignInput)
+      ? assignInput.filter(Boolean)
+      : [assignInput || req.user._id].filter(Boolean);
+
+    const newLead = await Lead.create({
       ...req.body,
-      //assign: req.user._id, // store auth user ID here
+      assign: assignedUserIds,
+      referer:req.user.name,
     });
-    res.status(201).json(lead);
+
+    // 🔹 Notify assigned users individually
+    for (const assignedUserId of assignedUserIds) {
+      const user = await User.findById(assignedUserId).select("_id");
+      if (user) {
+        await notifyUser({
+          userId: assignedUserId, // ✅ send to individual user
+          type: "lead_assigned",
+          message: `You have been assigned a new lead: ${newLead.name}`,
+          link: `/leads/${newLead._id}`,
+        });
+      }
+    }
+   
+
+    res.status(201).json(newLead);
   } catch (err) {
+    console.error("Error in createLead:", err);
     next(err);
   }
 };
 
+
 // @desc Update lead
 export const updateLead = async (req, res, next) => {
   try {
-    const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+    // Staff → can only update their own leads
+    if (req.user.role === "staff" && lead.assign.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const updatedLead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
-    if (!lead) return res.status(404).json({ message: "Lead not found" });
-    res.json(lead);
+
+    // notifications only on create, not on update
+    res.json(updatedLead);
   } catch (err) {
     next(err);
   }
@@ -144,13 +180,21 @@ export const updateLead = async (req, res, next) => {
 // @desc Delete lead
 export const deleteLead = async (req, res, next) => {
   try {
-    const lead = await Lead.findByIdAndDelete(req.params.id);
+    const lead = await Lead.findById(req.params.id);
     if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+    // Only admin & superadmin can delete
+    // if (req.user.role === "staff") {
+    //   return res.status(403).json({ message: "Only admin/superadmin can delete" });
+    // }
+
+    await lead.deleteOne();
     res.json({ message: "Lead deleted" });
   } catch (err) {
     next(err);
   }
 };
+
 
 // create/update lead APIs so that if you pass staff name instead of _id, it will automatically
 // @desc Get all leads

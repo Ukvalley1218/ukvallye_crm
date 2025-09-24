@@ -1,24 +1,31 @@
-import express from 'express';
-import { addExpense,updateExpenseStatus,getAllExpenses,getMyExpenses,deleteExpense,getExpenseById } from '../controllers/expenseController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import express from "express";
+import {
+  addExpense,
+  updateExpenseStatus,
+  getAllExpenses,
+  getMyExpenses,
+  deleteExpense,
+  getExpenseById,
+} from "../controllers/expenseController.js";
+
+import { protect, authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Staff: Add Expense & Get Own Expenses
-// add authMiddleware when you have admin access
+router.post("/", protect, authorize("staff", "admin", "superadmin"), addExpense);
+router.get("/my", protect, authorize("staff", "admin", "superadmin"), getMyExpenses);
 
+// Admin & Superadmin: Get All Expenses
+router.get("/", protect, authorize("admin", "superadmin"), getAllExpenses);
 
-router.post("/",addExpense);
-router.get("/my",getMyExpenses);
-
-// Admin: Get All Expenses
-router.get("/", getAllExpenses);
-
-router.get("/:id", getExpenseById);
+// View Expense by ID
+router.get("/:id", protect, authorize("staff", "admin", "superadmin"), getExpenseById);
 
 // Admin: Update Status (Approve/Reject)
-router.put("/:id/status", updateExpenseStatus);
+router.put("/:id/status", protect, authorize("admin", "superadmin"), updateExpenseStatus);
 
-// Delete Expense
-router.delete("/:id", deleteExpense);
+// Superadmin: Delete Expense
+router.delete("/:id", protect, authorize("superadmin"), deleteExpense);
+
 export default router;

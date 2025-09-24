@@ -6,20 +6,23 @@ import Note from "../models/Notes.js";
 export const getNotes = async (req, res, next) => {
   try {
     const { leadid, customerid, staffid, tag, search, startDate, endDate, page = 1, limit = 10 } = req.query;
-
     const filter = {};
+
+    // Staff can only see their own notes
+    if (req.user.role === "staff") {
+      filter.staffid = req.user._id;
+    } else {
+      if (staffid) filter.staffid = staffid; // allow admin/superadmin to filter
+    }
 
     if (leadid) filter.leadid = leadid;
     if (customerid) filter.customerid = customerid;
-    if (staffid) filter.staffid = staffid;
-    if (tag) filter.tags = { $in: [tag] }; // filter notes containing a tag
+    if (tag) filter.tags = { $in: [tag] };
 
-    // Text search inside content
     if (search) {
-      filter.content = { $regex: search, $options: "i" }; // case-insensitive
+      filter.content = { $regex: search, $options: "i" };
     }
 
-    // Date range filter (createdAt)
     if (startDate && endDate) {
       filter.createdAt = { $gte: new Date(startDate), $lte: new Date(endDate) };
     } else if (startDate) {
@@ -32,14 +35,13 @@ export const getNotes = async (req, res, next) => {
     const limitNumber = Number(limit) || 10;
     const skip = (pageNumber - 1) * limitNumber;
 
-    // Count total documents for pagination info
     const total = await Note.countDocuments(filter);
 
     const notes = await Note.find(filter)
       .populate("leadid")
       .populate("customerid")
       .populate("staffid")
-      .sort({ createdAt: -1 }) // optional: latest notes first
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNumber);
 
@@ -56,6 +58,7 @@ export const getNotes = async (req, res, next) => {
 };
 
 
+
 // @desc Get single note
 export const getNote = async (req, res, next) => {
   try {
@@ -65,19 +68,27 @@ export const getNote = async (req, res, next) => {
       .populate("staffid");
 
     if (!note) return res.status(404).json({ message: "Note not found" });
+
+    // Staff can only see their own note
+    if (req.user.role === "staff" && note.staffid.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     res.json(note);
   } catch (err) {
     next(err);
   }
 };
 
+
 // @desc Create new note
 export const createNote = async (req, res, next) => {
   try {
-    const note = await Note.create(req.body);
-    await note.populate("leadid");
-    await note.populate("customerid");
-    await note.populate("staffid");
+    const note = await Note.create({
+      ...req.body,
+      staffid: req.user._id, // auto-assign staff creating the note
+    });
+    await note.populate("leadid customerid staffid");
     res.status(201).json(note);
   } catch (err) {
     next(err);
@@ -87,15 +98,16 @@ export const createNote = async (req, res, next) => {
 // @desc Update note
 export const updateNote = async (req, res, next) => {
   try {
-    const note = await Note.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const note = await Note.findById(req.params.id);
     if (!note) return res.status(404).json({ message: "Note not found" });
-    await note.populate("leadid");
-    await note.populate("customerid");
-    await note.populate("staffid");
-    res.json(note);
+
+    if (req.user.role === "staff" && note.staffid.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    Object.assign(note, req.body);
+    await note.save();
+    await note.populate("leadid customerid staffid");
     res.json(note);
   } catch (err) {
     next(err);
@@ -105,11 +117,17 @@ export const updateNote = async (req, res, next) => {
 // @desc Delete note
 export const deleteNote = async (req, res, next) => {
   try {
-    const note = await Note.findByIdAndDelete(req.params.id);
+    const note = await Note.findById(req.params.id);
     if (!note) return res.status(404).json({ message: "Note not found" });
 
+    if (req.user.role === "staff" && note.staffid.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    await note.deleteOne();
     res.json({ message: "Note deleted" });
   } catch (err) {
     next(err);
   }
 };
+
