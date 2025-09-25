@@ -212,9 +212,9 @@ export const convertLeadToCustomer = async (req, res, next) => {
     // 2️⃣ Check if customer already exists (optional but recommended)
     const existingCustomer = await Customer.findOne({
       $or: [
-        { company: lead.company },
+        // { company: lead.company },
         { phone: lead.phone },
-        { address: lead.address }
+        // { address: lead.address }
       ]
     });
     if (existingCustomer) {
