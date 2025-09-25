@@ -61,9 +61,14 @@ export const getCustomerById = async (req, res, next) => {
 
     if (!customer) return res.status(404).json({ message: "Customer not found" });
 
-    // Staff can only see their own customers
-    if (req.user.role === "staff" && customer.assign?._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Access denied" });
+    // Staff can only see their assigned customers
+    if (req.user.role === "staff") {
+      const isAssigned = customer.assign.some(
+        (staff) => staff._id.toString() === req.user._id.toString()
+      );
+      if (!isAssigned) {
+        return res.status(403).json({ message: "Access denied" });
+      }
     }
 
     res.json(customer);
@@ -71,6 +76,7 @@ export const getCustomerById = async (req, res, next) => {
     next(err);
   }
 };
+
 
 
 // @desc Update customer

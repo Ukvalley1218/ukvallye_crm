@@ -237,8 +237,8 @@ export const convertLeadToCustomer = async (req, res, next) => {
       assign: lead.assign,
       defaultLanguage: lead.defaultLanguage,
       groups: "", // set default or dynamic
-      billingAddress: {}, // optional mapping
-      shippingAddress: {}, // optional mapping
+      // billingAddress: {}, // optional mapping
+      // shippingAddress: {}, // optional mapping
     });
 
     // 4️⃣ Delete the lead after conversion
