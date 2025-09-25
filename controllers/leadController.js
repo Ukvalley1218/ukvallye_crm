@@ -1,5 +1,6 @@
 import Lead from "../models/Lead.js";
 import User from "../models/User.js";
+import Customer from "../models/Customer.js";
 import { notifyUser } from "../utils/notify.js";
 
 // @desc Get all leads with filters
@@ -192,6 +193,63 @@ export const deleteLead = async (req, res, next) => {
     res.json({ message: "Lead deleted" });
   } catch (err) {
     next(err);
+  }
+};
+
+// @desc Convert Lead to Customer and delete Lead
+// @route POST /api/customers/convert/:leadId
+// @access Private
+export const convertLeadToCustomer = async (req, res, next) => {
+  try {
+    const { leadId } = req.params;
+
+    // 1️⃣ Find the lead
+    const lead = await Lead.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({ message: "Lead not found" });
+    }
+
+    // 2️⃣ Check if customer already exists (optional but recommended)
+    const existingCustomer = await Customer.findOne({
+      $or: [
+        { company: lead.company },
+        { phone: lead.phone },
+        { address: lead.address }
+      ]
+    });
+    if (existingCustomer) {
+      return res.status(400).json({ message: "Customer already exists with similar details" });
+    }
+
+    // 3️⃣ Create a new Customer from Lead fields
+    const newCustomer = await Customer.create({
+      company: lead.company || lead.name, // fallback to lead name if company is empty
+      phone: lead.phone,
+      website: lead.website,
+      address: lead.address,
+      city: lead.city,
+      state: lead.state,
+      zipCode: lead.zipCode,
+      country: lead.country,
+
+      referar: lead.referer, // mapping lead.referer to customer.referar
+      leadType: lead.leadType,
+      assign: lead.assign,
+      defaultLanguage: lead.defaultLanguage,
+      groups: "", // set default or dynamic
+      billingAddress: {}, // optional mapping
+      shippingAddress: {}, // optional mapping
+    });
+
+    // 4️⃣ Delete the lead after conversion
+    await Lead.findByIdAndDelete(leadId);
+
+    res.status(201).json({
+      message: "Lead converted to Customer successfully and deleted from Leads",
+      customer: newCustomer,
+    });
+  } catch (error) {
+    next(error);
   }
 };
 

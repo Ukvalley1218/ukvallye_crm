@@ -5,6 +5,7 @@ import {
   createLead,
   updateLead,
   deleteLead,
+  convertLeadToCustomer
 } from "../controllers/leadController.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
@@ -27,5 +28,8 @@ router.put("/:id", authorize("staff", "admin", "superadmin"), updateLead);
 
 // Only admin/superadmin can delete
 router.delete("/:id", authorize("staff","admin", "superadmin"), deleteLead);
+
+// convert lead to customer 
+router.post("/convert/:leadId",authorize("staff","admin","superadmin"),convertLeadToCustomer);
 
 export default router;
