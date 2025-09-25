@@ -9,7 +9,7 @@ const taskSchema = new mongoose.Schema(
 
     title: { type: String },
     description: { type: String },
-    dueDateTime: { type: Date },
+  
 
     // ✅ Calendar fields
     start: { type: Date },  

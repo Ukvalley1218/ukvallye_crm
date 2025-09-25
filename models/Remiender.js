@@ -9,7 +9,7 @@ const staffSchema = new mongoose.Schema(
     staffid:  [{ type: mongoose.Schema.Types.ObjectId, ref: "User" , default: null }],
     title: { type: String },
     description: { type: String },
-    datetime: { type: Date },
+    
     priority: {type: String, default: "medium" },
     status: {type: String, default: "pending" },
     reminderType: {type: String, default: "email" },
