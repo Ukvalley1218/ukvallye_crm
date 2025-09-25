@@ -8,17 +8,21 @@ import Customer from "../models/Customer.js";
 // @desc Get all customers with filters
 export const getCustomers = async (req, res, next) => {
   try {
-    let { page = 1, limit = 10, ...query } = req.query;
-
+    let { page = 1, limit = 10, search, ...query } = req.query;
     page = Number(page) || 1;
     limit = Number(limit) || 10;
 
     const filter = { ...query };
 
-    // If staff, only return customers assigned to them
+    // Search by company
+    if (search) {
+      filter.company = { $regex: search, $options: "i" };
+    }
+
+    // Staff only see assigned customers
     if (req.user.role === "staff") {
-  filter.assign = { $in: [req.user._id] };
-}
+      filter.assign = { $in: [req.user._id] };
+    }
 
     const total = await Customer.countDocuments(filter);
 
@@ -38,6 +42,7 @@ export const getCustomers = async (req, res, next) => {
     next(err);
   }
 };
+
 
 
 
