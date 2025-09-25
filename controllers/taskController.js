@@ -48,10 +48,10 @@ export const getTasks = async (req, res, next) => {
     const total = await Task.countDocuments(filter);
 
     const tasks = await Task.find(filter)
-      .populate("reminderid")
-      .populate("staffid")
-      .populate("leadid")
-      .populate("customerid")
+      .populate("reminderid","name")
+      .populate("staffid","name")
+      .populate("leadid","name")
+      .populate("customerid","name")
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });

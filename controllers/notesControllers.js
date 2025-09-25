@@ -63,9 +63,9 @@ export const getNotes = async (req, res, next) => {
 export const getNote = async (req, res, next) => {
   try {
     const note = await Note.findById(req.params.id)
-      .populate("leadid")
-      .populate("customerid")
-      .populate("staffid");
+      .populate("leadid","name")
+      .populate("customerid","name")
+      .populate("staffid","name");
 
     if (!note) return res.status(404).json({ message: "Note not found" });
 
