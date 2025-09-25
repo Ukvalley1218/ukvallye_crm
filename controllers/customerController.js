@@ -17,8 +17,8 @@ export const getCustomers = async (req, res, next) => {
 
     // If staff, only return customers assigned to them
     if (req.user.role === "staff") {
-      filter.assign = req.user._id;
-    }
+  filter.assign = { $in: [req.user._id] };
+}
 
     const total = await Customer.countDocuments(filter);
 
@@ -63,13 +63,14 @@ export const getCustomerById = async (req, res, next) => {
 
     // Staff can only see their assigned customers
     if (req.user.role === "staff") {
-      const isAssigned = customer.assign.some(
-        (staff) => staff._id.toString() === req.user._id.toString()
-      );
-      if (!isAssigned) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-    }
+  const isAssigned = customer.assign.some(
+    (staff) => staff._id.toString() === req.user._id.toString()
+  );
+  if (!isAssigned) {
+    return res.status(403).json({ message: "Access denied" });
+  }
+}
+
 
     res.json(customer);
   } catch (err) {
@@ -86,9 +87,10 @@ export const updateCustomer = async (req, res, next) => {
     if (!customer) return res.status(404).json({ message: "Customer not found" });
 
     // Staff can only update their own customers
-    if (req.user.role === "staff" && customer.assign?.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Access denied" });
-    }
+    if (req.user.role === "staff" && !customer.assign.some(id => id.toString() === req.user._id.toString())) {
+  return res.status(403).json({ message: "Access denied" });
+}
+
 
     const updated = await Customer.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
