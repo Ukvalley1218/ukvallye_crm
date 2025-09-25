@@ -5,7 +5,7 @@ const taskSchema = new mongoose.Schema(
     reminderid: { type: mongoose.Schema.Types.ObjectId, ref: "Reminders", default: null },
     leadid: { type: mongoose.Schema.Types.ObjectId, ref: "Lead", default: null },
     customerid: { type: mongoose.Schema.Types.ObjectId, ref: "Customer", default: null },
-    staffid: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    staffid: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }],
 
     title: { type: String },
     description: { type: String },
