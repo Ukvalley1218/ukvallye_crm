@@ -256,10 +256,10 @@ export const convertLeadToCustomer = async (req, res, next) => {
       end: lead.end,
 
       // Customer-only fields
-      groups: "", // can set default or map dynamically
-      currency: "System Default", // default
-      billingAddress: {}, // optional mapping if needed
-      shippingAddress: {}, // optional mapping if needed
+      //groups: "", // can set default or map dynamically
+      //currency: "System Default", // default
+      //billingAddress: {}, // optional mapping if needed
+      //shippingAddress: {}, // optional mapping if needed
     };
 
     // 4️⃣ Create a new Customer
