@@ -212,46 +212,72 @@ export const convertLeadToCustomer = async (req, res, next) => {
     // 2️⃣ Check if customer already exists (optional but recommended)
     const existingCustomer = await Customer.findOne({
       $or: [
-        // { company: lead.company },
         { phone: lead.phone },
-        // { address: lead.address }
+        { email: lead.email }
+        // You can also add { company: lead.company } if needed
       ]
     });
     if (existingCustomer) {
-      return res.status(400).json({ message: "Customer already exists with similar details" });
+      return res
+        .status(400)
+        .json({ message: "Customer already exists with similar details" });
     }
 
-    // 3️⃣ Create a new Customer from Lead fields
-    const newCustomer = await Customer.create({
-      company: lead.company || lead.name, // fallback to lead name if company is empty
+    // 3️⃣ Map all fields from Lead to Customer
+    const newCustomerData = {
+      // Lead fields
+      name: lead.name,
+      position: lead.position,
+      email: lead.email,
       phone: lead.phone,
       website: lead.website,
+
+      company: lead.company || lead.name, // fallback
+
       address: lead.address,
       city: lead.city,
       state: lead.state,
       zipCode: lead.zipCode,
       country: lead.country,
 
-      referar: lead.referer, // mapping lead.referer to customer.referar
-      leadType: lead.leadType,
+      title: lead.title,
+      leadValue: lead.leadValue,
+      status: lead.status,
+      source: lead.source,
       assign: lead.assign,
+      tags: lead.tags,
+      description: lead.description,
+      public: lead.public,
+      contactedToday: lead.contactedToday,
+      referer: lead.referer, // now matches Customer field name
+      leadType: lead.leadType,
       defaultLanguage: lead.defaultLanguage,
-      groups: "", // set default or dynamic
-      // billingAddress: {}, // optional mapping
-      // shippingAddress: {}, // optional mapping
-    });
+      start: lead.start,
+      end: lead.end,
 
-    // 4️⃣ Delete the lead after conversion
+      // Customer-only fields
+      groups: "", // can set default or map dynamically
+      currency: "System Default", // default
+      billingAddress: {}, // optional mapping if needed
+      shippingAddress: {}, // optional mapping if needed
+    };
+
+    // 4️⃣ Create a new Customer
+    const newCustomer = await Customer.create(newCustomerData);
+
+    // 5️⃣ Delete the lead after conversion
     await Lead.findByIdAndDelete(leadId);
 
     res.status(201).json({
-      message: "Lead converted to Customer successfully and deleted from Leads",
+      message:
+        "Lead converted to Customer successfully and deleted from Leads",
       customer: newCustomer,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 
 // create/update lead APIs so that if you pass staff name instead of _id, it will automatically
