@@ -16,7 +16,7 @@ const leadSchema = new mongoose.Schema(
     company: { type: String },
 title:{ type: String, default: "Other"  },
     leadValue: { type: Number, default: 0 },
-    status: { type: String, default: "Non selected" }, // dropdown
+    status: { type: String, default: "New" }, // dropdown
     source: { type: String, default: "Non selected" }, // dropdown
     assign: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" , default: null }],
     tags: [{ type: String }],
