@@ -22,6 +22,9 @@ import statRoutes from "./routes/statRoutes.js"
 // notifications
 import notificationRoutes from "./routes/notificationRoutes.js"
 
+// cron job
+import { setupCronJobs } from "./utils/cronJobs.js";
+setupCronJobs();
 
 dotenv.config();
 

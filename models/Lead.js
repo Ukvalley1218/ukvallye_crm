@@ -31,6 +31,10 @@ title:{ type: String, default: "Other"  },
     // ✅ Calendar fields
     start: { type: Date },  
     end: { type: Date },
+
+     // Soft delete fields
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

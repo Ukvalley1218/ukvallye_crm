@@ -5,7 +5,7 @@ import {
   createLead,
   updateLead,
   deleteLead,
-  convertLeadToCustomer
+  convertLeadToCustomer,getTrashLeads,restoreLead
 } from "../controllers/leadController.js";
 import { protect, authorize } from "../middleware/authMiddleware.js";
 
@@ -17,19 +17,19 @@ router.use(protect);
 // Staff, admin, superadmin can get leads
 router.get("/", authorize("staff", "admin", "superadmin"), getLeads);
 
-// Staff, admin, superadmin can view single lead
+// Specific routes first
+router.get('/trash', authorize("staff", "admin", "superadmin"), getTrashLeads);
+router.put('/restore/:id', authorize("staff", "admin", "superadmin"), restoreLead);
+
+// Then dynamic routes
 router.get("/:id", authorize("staff", "admin", "superadmin"), getLead);
 
-// Staff can create (their own), admin/superadmin can also create
 router.post("/", authorize("staff", "admin", "superadmin"), createLead);
-
-// Staff can update their own, admin/superadmin can update all
 router.put("/:id", authorize("staff", "admin", "superadmin"), updateLead);
-
-// Only admin/superadmin can delete
-router.delete("/:id", authorize("staff","admin", "superadmin"), deleteLead);
+router.delete("/:id", authorize("staff", "admin", "superadmin"), deleteLead);
 
 // convert lead to customer 
 router.post("/convert/:leadId",authorize("staff","admin","superadmin"),convertLeadToCustomer);
+
 
 export default router;

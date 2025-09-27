@@ -28,7 +28,7 @@ export const getLeads = async (req, res, next) => {
       limit = 10,
     } = req.query;
 
-    const filter = {};
+    const filter = {isDeleted:false}; // 🔹 add this
 
     // 🔹 Role-based filtering
     if (req.user.role === "staff") {
@@ -106,7 +106,9 @@ export const getLead = async (req, res, next) => {
       "name email phone"
     );
     if (!lead) return res.status(404).json({ message: "Lead not found" });
-
+if (lead.isDeleted) {
+  return res.status(404).json({ message: "Lead not found" });
+}
     // Staff can only see their leads
     if (req.user.role === "staff" && lead.assign.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Access denied" });
@@ -165,6 +167,9 @@ export const updateLead = async (req, res, next) => {
     // if (req.user.role === "staff" && lead.assign.toString() !== req.user._id.toString()) {
     //   return res.status(403).json({ message: "Access denied" });
     // }
+if (lead.isDeleted) {
+  return res.status(400).json({ message: "Cannot update a deleted lead" });
+}
 
     const updatedLead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -184,13 +189,36 @@ export const deleteLead = async (req, res, next) => {
     const lead = await Lead.findById(req.params.id);
     if (!lead) return res.status(404).json({ message: "Lead not found" });
 
-    // Only admin & superadmin can delete
-    // if (req.user.role === "staff") {
-    //   return res.status(403).json({ message: "Only admin/superadmin can delete" });
-    // }
+    // Soft delete
+    lead.isDeleted = true;
+    lead.deletedAt = new Date();
+    await lead.save();
 
-    await lead.deleteOne();
-    res.json({ message: "Lead deleted" });
+    res.json({ message: "Lead moved to trash" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getTrashLeads = async (req, res, next) => {
+  try {
+    const trashLeads = await Lead.find({ isDeleted: true });
+    res.json(trashLeads);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const restoreLead = async (req, res, next) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead || !lead.isDeleted) return res.status(404).json({ message: "Lead not found in trash" });
+
+    lead.isDeleted = false;
+    lead.deletedAt = null;
+    await lead.save();
+
+    res.json({ message: "Lead restored" });
   } catch (err) {
     next(err);
   }
